@@ -1,0 +1,175 @@
+完整记录 v2ray + ws + tls + nginx 
+
+  先决条件：Selinux 禁用
+  getenforce 查询 Selinux 状态。
+  vi /etc/selinux/config 永久关闭 enforcing 改成 disabled
+  sed -i '/SELINUX/s/enforcing/disabled/' /etc/selinux/config
+  
+  reboot system
+  
+  
+  V2ray改用2.47 版本 2.47以后版本会遇到时间同步问题 
+  如何修改时区：
+  1、date看看时区：
+  2、tzselect修改时区：
+  3、vi /etc/sysconfig/clock  add zone = Asia/Shshanghai
+  4、删除 rm -rf /etc/localtime
+  5、创建软连接 ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
+
+ /==================================================================================================================================================/
+  先装bbrplus
+  yum -y install wget && wget "https://github.com/cx9208/bbrplus/raw/master/ok_bbrplus_centos.sh" && chmod +x ok_bbrplus_centos.sh && ./ok_bbrplus_centos.sh
+  
+  执行 uname -r，显示 4.14.89 则切换内核成功；
+  执行 lsmod | grep bbr，显示有 bbrplus 则开启成功。
+  
+  将SELINUX=enforcing 修改为 SELINUX=disabled 状态。
+  vi /etc/selinux/config
+  重启生效。reboot。
+ /==================================================================================================================================================/
+
+    先安装nginx 基于 centos6 or centos7
+
+	1、获取官方的仓库地址
+	我们需要先访问nginx的官方网站，获取官方的仓库地址https://nginx.org/en/linux_packages.html#stable
+
+	新建/etc/yum.repos.d/nginx.repo 文件
+
+	内容为：(具体先到NGINX官方GET)
+
+	[nginx]
+	name=nginx repo
+	baseurl=http://nginx.org/packages/centos/6/$basearch/
+	gpgcheck=0
+	enabled=1
+
+	2、安装好仓库后可以直接使用yum安装nginx
+	yum install -y nginx
+
+	3、启动nginx
+	service nginx start
+	systemctl start nginx
+
+	4、查看
+	netstat -tunlp|grep 80
+
+	就可以看到nginx已经启动了80端口的监听。
+
+	并且通过浏览器直接访问服务器的ip地址，能看到已经出现了nginx的欢迎页面
+	
+	5、设置nginx为开机启动
+
+     chkconfig nginx on
+	 systemctl enable nginx
+	 
+  /==================================================================================================================================================/ 
+   Nginx启用Let’s Encrypt SSL证书
+   address: https://www.4spaces.org/nginx-lets-encrypt-ssl/
+   
+   客户端下载
+   Let’ s Encrypt客户端现已更名为certbot，客户端的地址为https://github.com/certbot/certbot/releases
+	 
+    #下载
+	wget  https://github.com/certbot/certbot/archive/v0.22.2.tar.gz
+
+	#解压
+	tar xzvf v0.22.2.tar.gz
+
+	#进入目录
+	cd certbot-0.22.2
+	
+	运行一次客户端，进行检查升级：
+	#进入目录
+	cd ~/certbot
+
+	#执行检查
+	./certbot-auto --help
+	 
+	 <获取证书>
+	 
+	 证书获取方式1：通过访问80端口方式验证
+	 
+	 #停止nginx
+	 systemctl stop nginx
+     
+	 (先要开放80端口)
+	 firewall-cmd --zone=public --add-port=80/tcp --permanent
+	 firewall-cmd --reload
+	 firewall-cmd --zone=public --list-ports
+	 
+	 Let’ s Encrypt客户端现已更名为certbot，客户端的地址为https://github.com/certbot/certbot/releases
+	 
+	    #下载
+		wget  https://github.com/certbot/certbot/archive/v0.22.2.tar.gz
+
+		#解压
+		tar xzvf v0.22.2.tar.gz
+
+		#进入目录
+		cd certbot-0.22.2
+	 
+	#获取证书, --standalone 参数:使用内置web server. --email 参数:管理员邮箱,证书到期前会发邮件到此邮箱提醒. -d 参数:要绑定的域名,同一域的不同子域都要输入.
+	./certbot-auto certonly --standalone --email 1074143056@qq.com -d freeweixi.com -d www.freeweixi.com
+
+	#启动nginx
+	systemctl start nginx
+	
+	证书续期
+	./certbot-auto renew   
+	
+	< 证书续期脚本 /root/auto-zs/certbotrenew.sh >
+	
+	#!/bin/sh
+	#停止 nginx 服务,使用 --standalone 独立服务器验证需要停止当前 web server.
+	systemctl stop nginx
+	if ! /root/certbot-0.22.2/certbot-auto renew -nvv --standalone > /var/log/letsencrypt/renew.log 2>&1 ; then
+		echo Automated renewal failed:
+		cat /var/log/letsencrypt/renew.log
+		exit 1
+	fi
+	#启动 nginx
+	systemctl start nginx
+	
+	#添加执行权限
+	chmod +x certbotrenew.sh  
+	
+	#编辑定时任务
+    sudo crontab -e
+	
+	0 23 28 * * /bin/sh /root/auto-zs/certbotrenew.sh  //添加这一行
+	
+	/==================================================================================================================================================/ 
+	一键脚本安装v2ray
+	
+	bash <(curl -s -L https://git.io/v2ray.sh)
+	
+	bash <(curl -L -s https://install.direct/go.sh)  官方脚本
+	
+	https://www.uuidgenerator.net/  ///uuid redom
+	
+	curl -O https://raw.githubusercontent.com/atrandys/v2ray-ws-tls/master/v2ray_ws_tls1.3.sh && chmod +x v2ray_ws_tls1.3.sh && ./v2ray_ws_tls1.3.sh
+	
+	大神一键脚本一条龙
+	
+	bbr 魔改
+	
+	wget -N --no-check-certificate "https://raw.githubusercontent.com/chiakge/Linux-NetSpeed/master/tcp.sh" && chmod +x tcp.sh && ./tcp.sh
+	
+
+	
+	bash <(curl -Lso- https://git.io/superspeed)   网络测速
+	
+	
+	
+	
+	 一键脚本trojan_panal
+	 source <(curl -sL https://git.io/trojan-install)
+	 
+	 source <(curl -sL https://git.io/trojan-install) --remove
+	 
+	 
+	 wget https://www.imbwh.com/tools/testrace.sh  测试路由
+     bash testrace.sh
+	 
+	
+
