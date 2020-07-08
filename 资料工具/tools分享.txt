@@ -1,0 +1,3 @@
+https://tool.lu/index.html    工具网
+
+curl -L tool.lu/ip   命令行获取外网IP
