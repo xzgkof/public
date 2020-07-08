@@ -1,0 +1,14 @@
+好文 
+https://www.cnblogs.com/alantu2018/p/8462574.html
+
+端口映射（本地）：
+
+开启 80 映射 8080
+iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-ports 8080
+
+关闭
+iptables -t nat -D PREROUTING -P TCP --dport 80 -j REDIRECT --to-port 8080
+
+https://blog.csdn.net/nainaiqiuwencun/article/details/80697388
+
+lsof -i:80      查端口对应程序

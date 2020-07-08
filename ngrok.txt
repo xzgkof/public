@@ -1,0 +1,27 @@
+﻿https://blog.csdn.net/daiqi5527153/article/details/78629359   参考
+
+
+nohup ./bin/ngrokd -tlsKey=server.key -tlsCrt=server.crt -domain="ngrok.xiezengguang.xyz" -httpAddr=":8081" -httpsAddr=":8082" & 
+
+
+
+client端（win）
+ngrok -subdomain web -proto=http -config=ngrok.cfg 8081 
+ngrok -subdomain web -proto=tcp -config=ngrok.cfg 8081 
+
+
+后台启动
+
+
+ubuntu/如何启动、关闭和设置ubuntu防火墙
+https://www.cnblogs.com/kaixinyufeng/p/9466747.html
+
+
+
+   ubuntu 安装 chacha20 加密
+
+    apt-get install build-essential
+    wget https://download.libsodium.org/libsodium/releases/LATEST.tar.gz
+    tar xf libsodium-1.0.10.tar.gz && cd libsodium-1.0.10
+    ./configure && make -j4 && make install
+    ldconfig
