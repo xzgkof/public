@@ -1,0 +1,17 @@
+1、用命令编辑/etc/my.cnf配置文件，即：vim /etc/my.cnf 或者 vi /etc/my.cnf 或者 nano /etc/my.cnf
+
+2.在[mysqld]下添加skip-grant-tables，然后保存并退出
+
+3.重启mysql服务：service mysqld restart
+
+4、重启以后，执行mysql命令进入mysql命令行 （无需密码）
+
+5、修改root用户密码
+
+MySQL> UPDATE mysql.user SET Password=PASSWORD('新密码') where USER='root';
+MySQL> flush privileges;
+MySQL> exit
+
+6、最后把/etc/my.cnf中的skip-grant-tables注释掉，然后重启mysql，即：service mysqld restart
+
+OK，下面我们就可以使用root新的密码登录MySQL了。
