@@ -1,0 +1,108 @@
+stealth_engine_js = f"""
+        (function() {{
+            const fake_gpu_v = '{gpu_v}';
+            const fake_gpu_r = '{gpu_r}';
+            const fake_platform = '{platform_str}';
+
+            // 1. 全速换血全域 WebGL (对齐苹果 GPU 芯片特征)
+            const proxyWebGL = (proto) => {{
+                if (!proto) return;
+                const oldGetParam = proto.getParameter; 
+                proto.getParameter = function(p) {{
+                    if (p === 37445) return fake_gpu_v;
+                    if (p === 37446) return fake_gpu_r;
+                    return oldGetParam.apply(this, arguments);
+                }};
+                proto.getParameter.toString = () => "function getParameter() {{ [native code] }}";
+            }};
+            if (window.WebGLRenderingContext) proxyWebGL(window.WebGLRenderingContext.prototype);
+            if (window.WebGL2RenderingContext) proxyWebGL(window.WebGL2RenderingContext.prototype);
+
+            // 2. 锁死原型链平台苹果基因
+            Object.defineProperty(window.Navigator.prototype, 'platform', {{ get: () => fake_platform }});
+            Object.defineProperty(window.navigator, 'platform', {{ get: () => fake_platform }});
+            Object.defineProperty(window.Navigator.prototype, 'vendor', {{ get: () => "Apple Computer, Inc." }});
+            Object.defineProperty(window.navigator, 'vendor', {{ get: () => "Apple Computer, Inc." }});
+
+            // 3. 🍎 iOS 生态深度清空与脱敏 (物理铲除全局谷歌残留)
+            if (window.chrome) {{
+                delete window.chrome;
+            }}
+            Object.defineProperty(window.navigator, 'userAgentData', {{ get: () => undefined, configurable: true }});
+            if (window.Navigator && window.Navigator.prototype) {{
+                Object.defineProperty(window.Navigator.prototype, 'userAgentData', {{ get: () => undefined, configurable: true }});
+            }}
+
+            // 4. 🍎【全新绝杀：音频指纹高频投毒】
+            // 强制在音频缓冲区中混入极其微小的随机杂讯，彻底破坏声波 MD5 连续性，让每次测出的声音指纹完全随机！
+            if (window.AudioBuffer && window.AudioBuffer.prototype) {{
+                const oldGetChannelData = window.AudioBuffer.prototype.getChannelData;
+                window.AudioBuffer.prototype.getChannelData = function() {{
+                    const buffer = oldGetChannelData.apply(this, arguments);
+                    for (let i = 0; i < buffer.length; i += 100) {{
+                        buffer[i] = buffer[i] + (Math.random() * 0.00000001);
+                    }}
+                    return buffer;
+                }};
+            }}
+
+            // 5. 🍎【全新绝杀：清除谷歌 Speech 语音包痕迹】
+            if (window.speechSynthesis) {{
+                window.speechSynthesis.getVoices = () => [];
+            }}
+
+            // 6. 🍎【全新重磅加固：多线程 Web Worker 物理绑架矩阵】
+            // 彻底堵死后台 Worker 离线状态下向内核索要真口供（Chromium 142）的后门通道！
+            if (window.navigator.serviceWorker) {{
+                window.navigator.serviceWorker.register = function() {{
+                    return new Promise((resolve, reject) => reject(new Error("Service Workers Shield Active")));
+                }};
+            }}
+            try {{
+                const OldWorker = window.Worker;
+                window.Worker = class extends OldWorker {{
+                    constructor(scriptURL, options) {{
+                        let newURL = scriptURL;
+                        if (typeof scriptURL === 'string' && !scriptURL.startsWith('blob:')) {{
+                            try {{
+                                const xhr = new XMLHttpRequest();
+                                xhr.open('GET', scriptURL, false); // 同步截捕
+                                xhr.send();
+                                const workerCode = xhr.responseText;
+                                
+                                // 强制给地下室的工人线程洗脑：灌入纯正苹果基因，死锁 userAgentData 属性！
+                                const prependedCode = 'Object.defineProperty(self.navigator, "userAgentData", {{ get: () => undefined }});' +
+                                                    'Object.defineProperty(self.navigator, "platform", {{ get: () => "iPhone" }});' +
+                                                    'if(self.chrome) delete self.chrome;';
+                                
+                                const blob = new Blob([prependedCode + workerCode], {{ type: 'application/javascript' }});
+                                newURL = URL.createObjectURL(blob);
+                            }} catch(e) {{}}
+                        }}
+                        super(newURL, options);
+                    }}
+                }};
+            }} catch(worker_err) {{}}
+
+            // 7. 强行纠正所有动态生成的 iframe 的祖先原型链 (防 Iframe 逃逸偷渡)
+            if (window.HTMLIFrameElement) {{
+                const rawGetter = Object.getOwnPropertyDescriptor(window.HTMLIFrameElement.prototype, 'contentWindow').get;
+                Object.defineProperty(window.HTMLIFrameElement.prototype, 'contentWindow', {{
+                    get: function() {{
+                        const iframeWin = rawGetter.apply(this);
+                        if (iframeWin) {{
+                            try {{
+                                if (iframeWin.WebGLRenderingContext) proxyWebGL(iframeWin.WebGLRenderingContext.prototype);
+                                if (iframeWin.WebGL2RenderingContext) proxyWebGL(iframeWin.WebGL2RenderingContext.prototype);
+                                Object.defineProperty(iframeWin.navigator, 'platform', {{ get: () => fake_platform }});
+                                Object.defineProperty(iframeWin.navigator, 'vendor', {{ get: () => "Apple Computer, Inc." }});
+                                Object.defineProperty(iframeWin.navigator, 'userAgentData', {{ get: () => undefined, configurable: true }});
+                                if (iframeWin.chrome) delete iframeWin.chrome;
+                            }} catch(e) {{}}
+                        }}
+                        return iframeWin;
+                    }}
+                }});
+            }}
+        }})();
+        """
